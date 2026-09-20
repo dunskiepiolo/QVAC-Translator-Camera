@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>QVAC Translator Camera</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0a0b10;
+    --border: #232433;
+    --text: #eef0f6;
+    --muted: #8b8fa3;
+    --accent1: #7c5cff;
+    --accent2: #22d3ee;
+    --accent3: #ff5cad;
+    --good: #2ee6a6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 500px at 15% -10%, #7c5cff22, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #22d3ee1c, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    margin: 0;
+    min-height: 100vh;
+    padding: 48px 24px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent2);
+    background: #22d3ee14; border: 1px solid #22d3ee33;
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--good); box-shadow: 0 0 8px var(--good);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.4; transform:scale(.7);} }
+
+  h1 {
+    font-size: 32px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #fff 20%, var(--accent2) 60%, var(--accent1) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.sub { color: var(--muted); font-size: 14.5px; margin: 0 0 28px; max-width: 620px; line-height: 1.5; }
+  p.sub code { background: #ffffff10; padding: 1px 6px; border-radius: 5px; color: #cfd3ff; font-size: 13px; }
+
+  .card {
+    background: linear-gradient(180deg, #ffffff08, #ffffff02);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 20px 60px -20px #00000090;
+  }
+
+  #dropzone {
+    border: 2px dashed #333;
+    border-radius: 14px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  #dropzone.drag { border-color: var(--accent1); background: #7c5cff11; }
+  #dropzone .icon { font-size: 30px; margin-bottom: 6px; }
+  #dropzone p { color: var(--muted); margin: 6px 0 0; font-size: 13px; }
+
+  #preview { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid #333; display: none; margin-top: 16px; }
+
+  button.primary {
+    margin-top: 18px; width: 100%;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #05060a; font-weight: 700; border: none;
+    padding: 14px 24px; border-radius: 12px; font-size: 14.5px; cursor: pointer;
+    transition: transform .1s, filter .15s, box-shadow .15s;
+    box-shadow: 0 8px 24px -8px #7c5cff88;
+  }
+  button.primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+  button.primary:disabled { background: #22232f; color: #6b6f83; cursor: not-allowed; box-shadow: none; }
+
+  .pipeline { display: flex; gap: 10px; margin-top: 20px; }
+  .pstep {
+    flex: 1; text-align: center; padding: 10px 6px; border-radius: 10px;
+    border: 1px solid var(--border); font-size: 11.5px; color: var(--muted);
+    transition: all .2s;
+  }
+  .pstep .label { font-weight: 700; font-size: 12.5px; margin-bottom: 2px; }
+  .pstep.active { border-color: var(--accent2); background: #22d3ee14; color: var(--text); }
+  .pstep.done { border-color: var(--good); color: var(--good); }
+
+  #status { font-size: 13px; color: var(--muted); margin-top: 14px; text-align: center; min-height: 18px; }
+
+  .result { display: none; margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .rowitem { margin-bottom: 16px; }
+  .rowitem h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 6px; }
+  .rowitem .val {
+    background: #0d0e14; border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 15px; line-height: 1.5;
+  }
+  .rowitem.es .val { color: #a7f3d0; }
+  audio { width: 100%; margin-top: 4px; }
+
+  footer { margin-top: 24px; font-size: 12px; color: #565a70; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="dot"></span> Runs 100% on-device</div>
+  <h1>QVAC Translator Camera</h1>
+  <p class="sub">
+    Three chained on-device steps through Tether's QVAC SDK &mdash;
+    <code>ocr()</code> &rarr; <code>translate()</code> &rarr; <code>textToSpeech()</code>.
+    Point it at a photo of English text and get it read, translated to Spanish, and spoken aloud.
+  </p>
+
+  <div class="card">
+    <div id="dropzone">
+      <div class="icon">📷</div>
+      <div>Drop a photo of text here, or click to choose one</div>
+      <p>PNG or JPEG &middot; sign, label, note, receipt</p>
+    </div>
+    <input id="fileInput" type="file" accept="image/png,image/jpeg" style="display:none" />
+    <img id="preview" alt="preview" />
+
+    <button class="primary" id="runButton" disabled>Read, translate &amp; speak</button>
+
+    <div class="pipeline">
+      <div class="pstep" id="stepOcr"><div class="label">1. OCR</div>read text</div>
+      <div class="pstep" id="stepTranslate"><div class="label">2. Translate</div>EN &rarr; ES</div>
+      <div class="pstep" id="stepTts"><div class="label">3. Speak</div>text-to-speech</div>
+    </div>
+    <div id="status"></div>
+
+    <div class="result" id="resultCard">
+      <div class="rowitem">
+        <h3>Detected text (OCR)</h3>
+        <div class="val" id="ocrText"></div>
+      </div>
+      <div class="rowitem es">
+        <h3>Translated (Spanish)</h3>
+        <div class="val" id="esText"></div>
+      </div>
+      <div class="rowitem">
+        <h3>Spoken audio</h3>
+        <audio id="audioPlayer" controls></audio>
+      </div>
+    </div>
+  </div>
+
+  <footer>on-device inference &middot; QVAC SDK &middot; ocr() + translate() + textToSpeech()</footer>
+</div>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const runButton = document.getElementById('runButton');
+  const statusEl = document.getElementById('status');
+  const resultCard = document.getElementById('resultCard');
+  const ocrText = document.getElementById('ocrText');
+  const esText = document.getElementById('esText');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const stepOcr = document.getElementById('stepOcr');
+  const stepTranslate = document.getElementById('stepTranslate');
+  const stepTts = document.getElementById('stepTts');
+
+  let currentDataUrl = null;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) loadFile(fileInput.files[0]);
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      currentDataUrl = reader.result;
+      preview.src = currentDataUrl;
+      preview.style.display = 'block';
+      runButton.disabled = false;
+      statusEl.textContent = '';
+      resultCard.style.display = 'none';
+      [stepOcr, stepTranslate, stepTts].forEach(s => s.classList.remove('active', 'done'));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  runButton.addEventListener('click', async () => {
+    if (!currentDataUrl) return;
+    runButton.disabled = true;
+    resultCard.style.display = 'none';
+    statusEl.textContent = '▸ Uploading image...';
+    [stepOcr, stepTranslate, stepTts].forEach(s => s.classList.remove('active', 'done'));
+
+    // Images can be well over the URL length limit, so upload first (POST)
+    // and only pass a short id through the SSE GET request.
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: currentDataUrl }),
+    });
+    const { id } = await uploadRes.json();
+
+    const es = new EventSource('/api/run?id=' + encodeURIComponent(id));
+
+    es.addEventListener('step', (e) => {
+      const { step, status } = JSON.parse(e.data);
+      const el = { ocr: stepOcr, translate: stepTranslate, tts: stepTts }[step];
+      if (status === 'active') { el.classList.add('active'); statusEl.textContent = `▸ Running ${step} on-device...`; }
+      if (status === 'done') { el.classList.remove('active'); el.classList.add('done'); }
+    });
+
+    es.addEventListener('done', (e) => {
+      const data = JSON.parse(e.data);
+      ocrText.textContent = data.text;
+      esText.textContent = data.translated;
+      audioPlayer.src = 'data:audio/wav;base64,' + data.audioBase64;
+      resultCard.style.display = 'block';
+      statusEl.textContent = '✔ Done — ran entirely on-device';
+      runButton.disabled = false;
+      es.close();
+    });
+
+    es.addEventListener('error', (e) => {
+      let message = 'Pipeline failed';
+      try { message = JSON.parse(e.data).error; } catch {}
+      statusEl.textContent = '✖ ' + message;
+      runButton.disabled = false;
+      es.close();
+    });
+  });
+</script>
+</body>
+</html>

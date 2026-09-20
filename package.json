@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/translate-camera.js",
   "scripts": {
-    "start": "node src/translate-camera.js"
+    "start": "node src/translate-camera.js",
+    "gui": "node src/gui.js"
   },
   "keywords": [
     "qvac",

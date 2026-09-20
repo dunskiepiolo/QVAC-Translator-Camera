@@ -74,6 +74,28 @@ On first run each of the three models downloads with a progress bar.
 Every run after that loads from the local cache and runs fully offline —
 your photo and text never leave your machine.
 
+## GUI mode
+
+A web UI is also included with a live 3-step pipeline view — same
+on-device chain, streamed over Server-Sent Events:
+
+```bash
+npm run gui
+```
+
+This starts a local server (`http://localhost:9191` by default) and loads
+each model lazily on first use, so startup is instant and only the first
+run per step takes a moment. Open the page, drop in a photo, click
+**Read, translate & speak**, and watch each of the three steps light up
+(OCR → Translate → Speak) as they complete, then see the detected text,
+the Spanish translation, and a playable audio result. Override the port
+with `PORT=8080 npm run gui`.
+
+Verified working end-to-end on 2026-09-20 via the actual HTTP endpoints:
+uploading the bundled sample returned the correct detected text, the
+correct Spanish translation, and a valid WAV audio payload, with each SSE
+pipeline step firing `active` then `done` in the right order.
+
 ## How it uses QVAC
 
 ```js
