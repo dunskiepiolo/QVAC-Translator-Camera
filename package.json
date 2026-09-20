@@ -1,0 +1,25 @@
+{
+  "name": "qvac-translator-camera",
+  "version": "1.0.0",
+  "description": "Point it at a photo of text and it reads the text, translates it, and speaks it aloud, entirely on-device with Tether's QVAC SDK. Chains ocr() + translate() + textToSpeech() in one pipeline.",
+  "type": "module",
+  "main": "src/translate-camera.js",
+  "scripts": {
+    "start": "node src/translate-camera.js"
+  },
+  "keywords": [
+    "qvac",
+    "on-device-ai",
+    "ocr",
+    "translation",
+    "text-to-speech",
+    "offline-ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@qvac/sdk": "^0.19.0"
+  },
+  "engines": {
+    "node": ">=22.17"
+  }
+}

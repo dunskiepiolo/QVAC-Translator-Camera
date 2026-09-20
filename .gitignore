@@ -1,0 +1,7 @@
+node_modules/
+.claude/
+.qvac/
+qvac.config.json
+npm-debug.log*
+.DS_Store
+output.wav
